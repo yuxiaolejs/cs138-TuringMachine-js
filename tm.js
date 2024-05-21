@@ -155,16 +155,9 @@ class TuringMachine {
     }
 }
 
-// console.log('\x1Bc');
-// while (!tm.halt) {
-//     tm.step();
-//     tm.printTape()
-//     console.log(`\u001b[${0};${0}H`);
-// }
-// console.log("\n")
-
 function main() {
     const file = process.argv[2];
+    // Start parsing yaml file
     let content = '';
     try {
         content = yaml.load(fs.readFileSync(file, 'utf8'));
@@ -235,12 +228,15 @@ function main() {
     tm.setInitialState(content["start state"]);
     tm.sanityCheck();
 
-    // start the machine
+    // Finished parsing
+
+    // this is how you give it a input
     tm.loadTape("aabbaab;ab;ab;aabbaab;aab;abb;aab;abb");
-    // clear console
 
-    // tm.runWithSteps(10);
+    // This is how you run it
+    tm.runWithSteps(10);
 
+    // This should give the mentor representation of this machine
     console.log(tm.convertToMentor())
 
     if (tm.isAccepting())
