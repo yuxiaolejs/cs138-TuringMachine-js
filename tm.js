@@ -87,7 +87,10 @@ class TuringMachine {
             const transition = s.transitions[this.tape[this.head]];
             if ("write" in transition)
                 this.tape[this.head] = transition.write;
-            this.head += transition.move;
+            if (transition.move == -100)
+                this.head = 0;
+            else
+                this.head += transition.move;
             for (const state of this.states) {
                 if (state.name === transition.next) {
                     this.state = this.states.indexOf(state);
@@ -120,12 +123,108 @@ class TuringMachine {
             this.step();
             this.printTape(20);
             console.log(`\u001b[${0};${0}H`);
-            if (this.halt)
+            if (this.halt) {
                 clearInterval(runInterval);
+                this.printTape(20);
+                return;
+            }
         }, delay);
         console.log("\n")
     }
-    convertToMentor() {
+    genMoveToRight(appendHead, alphabet, startState) {
+        let s = new State();
+        s.name = "tyr1";
+        s.transitions = {};
+        for (const alpha of alphabet) {
+            s.transitions[alpha] = { move: 1, next: "tyr11" }
+        }
+        s.transitions[this.emptyChar] = { move: 1, next: "tyre" }
+        this.states.push(s);
+
+        s = new State();
+        s.name = "tyr11";
+        s.transitions = {};
+        for (const alpha of alphabet) {
+            s.transitions[alpha] = { move: 1, next: "tyr11" }
+        }
+        s.transitions[this.emptyChar] = { move: -1, next: "tyr2" }
+        this.states.push(s);
+
+        s = new State();
+        s.name = "tyr2";
+        s.transitions = {};
+        for (const alpha of alphabet) {
+            s.transitions[alpha] = { move: 1, write: this.emptyChar, next: `tyr3${alpha}0` }
+        }
+        this.states.push(s);
+        // add dummy
+        for (let i = 0; i < appendHead; i++) {
+            for (const alpha of alphabet) {
+                s = new State();
+                s.name = `tyr3${alpha}${i}`;
+                s.transitions = {};
+                for (const alpha1 of alphabet) {
+                    s.transitions[alpha1] = { move: 1, next: `tyr3${alpha}${i + 1}` }
+                }
+                s.transitions[this.emptyChar] = { move: 1, next: `tyr3${alpha}${i + 1}` }
+                this.states.push(s);
+            }
+        }
+
+        for (const alpha of alphabet) {
+            s = new State();
+            s.name = `tyr3${alpha}${appendHead}`;
+            s.transitions = {};
+            s.transitions[this.emptyChar] = { move: -100, write: alpha, next: "tyr1" }
+            this.states.push(s);
+        }
+
+        s = new State();
+        s.name = "tyre";
+        s.transitions = {};
+        s.transitions[this.emptyChar] = { move: 1, next: "tyre" }
+        for (const alpha of alphabet) {
+            s.transitions[alpha] = { move: -1, next: "tyre2" }
+        }
+        this.states.push(s);
+
+        s = new State();
+        s.name = "tyre2";
+        s.transitions = {};
+        for (const alpha of alphabet) {
+            s.transitions[alpha] = { move: 1, next: startState }
+        }
+        s.transitions[this.emptyChar] = { move: 1, next: startState }
+        this.states.push(s);
+
+        this.setInitialState("tyr1")
+        // pure mentor magic
+        let mentorStates = `tyr1 ({${alphabet.join(",")}}->.,R tyr11) (_->.,R tyre)\n`
+        mentorStates += `tyr11 ({${alphabet.join(",")}}->.,R tyr11) (_->.,L tyr2)\n`
+        mentorStates += `tyr2 `
+
+        // Store alpha in state, move to dummy state
+        for (const alpha of alphabet) {
+            mentorStates += `(${alpha}->_,R tyr3${alpha}0) `
+        }
+        mentorStates += "\n"
+
+        // Add dummy states that moves right
+        for (let i = 0; i < appendHead; i++)
+            for (const alpha of alphabet) {
+                mentorStates += `tyr3${alpha}${i} (.->.,R tyr3${alpha}${i + 1})\n`
+            }
+
+        // Paste the original char
+        for (const alpha of alphabet) {
+            mentorStates += `tyr3${alpha}${appendHead} (.->${alpha},S tyr1)\n`
+        }
+        mentorStates += `tyre (_->., R tyre) ({${alphabet.join(",")}}->.,L tyre2)\n`
+        mentorStates += `tyre2 (.->., R ${startState})\n`
+        return ""
+    }
+    // appendHead: number, if given, will move the input string to the right by that many characters
+    convertToMentor(appendHead) {
         let alphabet = [];
         for (const state of this.states)
             for (const transition in state.transitions)
@@ -134,9 +233,15 @@ class TuringMachine {
         if (alphabet.includes(this.emptyChar)) {
             alphabet.splice(alphabet.indexOf(this.emptyChar), 1);
         }
-        let mentorHeader = `alphabet: {${alphabet.join(",")}}\nstart: ${this.states[this.initState].name}\n`
-
+        let mentorHeader
         let mentorStates = "";
+        if (appendHead) {
+            mentorHeader = `alphabet: {${alphabet.join(",")}}\nstart: tyr1\n`
+            mentorStates += this.genMoveToRight(appendHead, alphabet, this.states[this.initState].name)
+        }
+        else
+            mentorHeader = `alphabet: {${alphabet.join(",")}}\nstart: ${this.states[this.initState].name}\n`
+
         for (const state of this.states) {
             mentorStates += `${state.name} `
             let mentorTransitions = ""
@@ -231,13 +336,15 @@ function main() {
     // Finished parsing
 
     // this is how you give it a input
-    tm.loadTape("aabbaab;ab;ab;aabbaab;aab;abb;aab;abb");
+    tm.loadTape("11;10");
 
-    // This is how you run it
-    tm.runWithSteps(10);
 
     // This should give the mentor representation of this machine
-    console.log(tm.convertToMentor())
+    console.log(tm.convertToMentor(1))
+
+    // This is how you run it
+    // tm.runWithSteps(500);
+
 
     if (tm.isAccepting())
         console.log('Accepted');
