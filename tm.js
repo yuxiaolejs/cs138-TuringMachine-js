@@ -1,6 +1,8 @@
 const yaml = require('js-yaml');
 const fs = require('fs');
 
+// Please go to the main function below to see how to use this program
+
 class State {
     transitions = {};
     name = '';
@@ -225,6 +227,7 @@ class TuringMachine {
     }
     // appendHead: number, if given, will move the input string to the right by that many characters
     convertToMentor(appendHead) {
+        console.log(this.states[2])
         let alphabet = [];
         for (const state of this.states)
             for (const transition in state.transitions)
@@ -247,8 +250,12 @@ class TuringMachine {
             let mentorTransitions = ""
             for (const transition in state.transitions) {
                 let t = state.transitions[transition];
-                let move = (t.move === 1) ? "R" : "L";
-                let write = (t.write) ? t.write : ".";
+                let move
+                if (t.move === -100)
+                    move = "S"
+                else
+                    move = (t.move === 1) ? "R" : "L";
+                let write = ("write" in t) ? t.write : ".";
                 let trs = (transition === this.emptyChar) ? "_" : transition
                 write = (write === this.emptyChar) ? "_" : write;
                 mentorTransitions += `(${trs} -> ${write},${move} ${t.next ? t.next : state.name}) `
@@ -261,7 +268,7 @@ class TuringMachine {
 }
 
 function main() {
-    const file = process.argv[2];
+    const file = process.argv[2]; // This is the yaml file, use `node tm.js <file>` to run this program
     // Start parsing yaml file
     let content = '';
     try {
@@ -333,17 +340,21 @@ function main() {
     tm.setInitialState(content["start state"]);
     tm.sanityCheck();
 
-    // Finished parsing
+    // Finished parsing, please start using your machine here
 
     // this is how you give it a input
-    tm.loadTape("11;10");
+    tm.loadTape("1;1");
 
 
     // This should give the mentor representation of this machine
-    console.log(tm.convertToMentor(1))
+    console.log(tm.convertToMentor())
+
+    // This should give you the mentor representation of this machine with the input string moved to the right by 10 characters
+    // Since mentor is single direction tape, this is useful for some cases
+    console.log(tm.convertToMentor(10))
 
     // This is how you run it
-    // tm.runWithSteps(500);
+    // tm.runWithSteps(100);
 
 
     if (tm.isAccepting())
