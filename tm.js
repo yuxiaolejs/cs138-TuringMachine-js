@@ -200,7 +200,7 @@ class TuringMachine {
         this.states.push(s);
 
         this.setInitialState("tyr1")
-        // pure mentor magic
+        // pure mentor magic, DEPRECATED PLEASE IGNORE
         let mentorStates = `tyr1 ({${alphabet.join(",")}}->.,R tyr11) (_->.,R tyre)\n`
         mentorStates += `tyr11 ({${alphabet.join(",")}}->.,R tyr11) (_->.,L tyr2)\n`
         mentorStates += `tyr2 `
@@ -227,7 +227,6 @@ class TuringMachine {
     }
     // appendHead: number, if given, will move the input string to the right by that many characters
     convertToMentor(appendHead) {
-        console.log(this.states[2])
         let alphabet = [];
         for (const state of this.states)
             for (const transition in state.transitions)
@@ -263,7 +262,8 @@ class TuringMachine {
             mentorStates += mentorTransitions + "\n"
         }
 
-        console.log(mentorHeader + mentorStates)
+        // console.log(mentorHeader + mentorStates)
+        return mentorHeader + mentorStates
     }
 }
 
@@ -351,7 +351,9 @@ function main() {
 
     // This should give you the mentor representation of this machine with the input string moved to the right by 10 characters
     // Since mentor is single direction tape, this is useful for some cases
-    console.log(tm.convertToMentor(10))
+    // console.log(tm.convertToMentor(10))
+
+    fs.writeFileSync(process.argv[2]+".tm", tm.convertToMentor(10))
 
     // This is how you run it
     // tm.runWithSteps(100);
