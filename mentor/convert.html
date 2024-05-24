@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <p>This is interesting: You can ask this converter to automatically add blank spaces before your input starts!</p>
+    <p>How many blanks you need on the left side of your tape? <input type="text" id="num"
+            placeholder="Integer or blank" />
+        <button id="conv">Convert</button>
+    </p>
+    <textarea name="" id="t1" style="width:40vw;height:80vh"
+        placeholder="Paste your YAML COPIED from website"></textarea>
+    <textarea name="" id="t2" style="width:40vw;height:80vh" placeholder="GET YOUR MENTOR HERE"></textarea>
+    <textarea name="" id="t3" style="width:100vw;height:10vh" placeholder="LOG HERE"></textarea>
+</body>
+<!-- <script type="module" src="./js-yaml.mjs" ></script> -->
+<!-- <script type="module" src="tmfront.js"></script> -->
+
+<script type="module">
+    import { conv, getLog } from "./tmfront.js";
+    const doit = () => {
+        let num = document.getElementById("num").value
+        document.getElementById("t2").value = conv(document.getElementById("t1").value, parseInt(num))
+        document.getElementById("t3").value = getLog()
+    }
+    document.getElementById("t1").onchange = doit
+    document.getElementById("conv").onclick = doit
+</script>
+
+<script>
+
+</script>
+
+</html>
